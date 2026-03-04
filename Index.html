@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Abi Secure Terminal</title>
+
+<style>
+body {
+    margin: 0;
+    background: black;
+    color: #00ff00;
+    font-family: "Courier New", monospace;
+    overflow: hidden;
+}
+
+/* Matrix background */
+#matrix {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -2;
+}
+
+/* Glitch overlay */
+.glitch {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+}
+.glitch.active {
+    animation: glitchAnim 0.25s infinite;
+}
+@keyframes glitchAnim {
+    0% { transform: translate(0); filter: hue-rotate(0deg); }
+    25% { transform: translate(-4px,2px); filter: hue-rotate(90deg); }
+    50% { transform: translate(4px,-2px); filter: hue-rotate(180deg); }
+    75% { transform: translate(-2px,1px); filter: hue-rotate(270deg); }
+    100% { transform: translate(0); filter: hue-rotate(0deg); }
+}
+
+/* Boxes */
+.login-box, .terminal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: 2px solid #00ff00;
+    padding: 30px;
+    width: 420px;
+    text-align: center;
+    box-shadow: 0 0 20px #00ff00;
+    background: rgba(0,0,0,0.85);
+}
+
+input {
+    background: black;
+    border: 1px solid #00ff00;
+    color: #00ff00;
+    padding: 10px;
+    width: 80%;
+    margin-top: 10px;
+    font-family: monospace;
+}
+
+button {
+    margin-top: 15px;
+    padding: 8px 20px;
+    background: black;
+    border: 1px solid #00ff00;
+    color: #00ff00;
+    cursor: pointer;
+}
+button:hover {
+    background: #00ff00;
+    color: black;
+}
+
+.error { color: red; margin-top: 10px; }
+.terminal { display: none; }
+
+.blink { animation: blink 1s infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* Progress bar */
+.progress-container {
+    width: 100%;
+    border: 1px solid #00ff00;
+    margin-top: 20px;
+    height: 20px;
+}
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    background: #00ff00;
+}
+
+/* Fake IP box */
+.ip-box {
+    margin-top: 15px;
+    font-size: 14px;
+    text-align: left;
+    border-top: 1px dashed #00ff00;
+    padding-top: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="matrix"></canvas>
+<div class="glitch" id="glitch"></div>
+
+<!-- LOGIN -->
+<div class="login-box" id="loginBox">
+    <h2>SECURE LOGIN</h2>
+    <p>Enter password to continue</p>
+    <input type="password" id="password" placeholder="Password">
+    <br>
+    <button onclick="checkPassword()">ACCESS</button>
+    <div class="error" id="errorMsg"></div>
+</div>
+
+<!-- TERMINAL -->
+<div class="terminal" id="terminal">
+    <h1>ACCESS GRANTED</h1>
+    <p>Status: <span class="blink">ONLINE</span></p>
+
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <p id="progressText">Starting hack...</p>
+
+    <div class="ip-box" id="ipBox"></div>
+    <p id="typing"></p>
+</div>
+
+<script>
+// 🔐 PASSWORD
+const correctPassword = "1234";
+
+function checkPassword() {
+    const input = document.getElementById("password").value;
+    if (input === correctPassword) {
+        loginBox.style.display = "none";
+        terminal.style.display = "block";
+        startHack();
+    } else {
+        errorMsg.innerText = "ACCESS DENIED";
+    }
+}
+
+// 🧨 Glitch
+function triggerGlitch(duration=3000){
+    glitch.classList.add("active");
+    setTimeout(()=>glitch.classList.remove("active"), duration);
+}
+
+// 💀 Fake hack progress
+function startHack() {
+    let progress = 0;
+    triggerGlitch(4000);
+
+    const messages = [
+        "Bypassing firewall...",
+        "Decrypting passwords...",
+        "Accessing mainframe...",
+        "Injecting payload...",
+        "Finalizing..."
+    ];
+
+    const interval = setInterval(() => {
+        progress++;
+        progressBar.style.width = progress + "%";
+
+        if (progress % 20 === 0 && progress/20 - 1 < messages.length) {
+            progressText.innerText = messages[progress/20 - 1];
+        }
+
+        if (progress === 60) showFakeIP();
+
+        if (progress >= 100) {
+            clearInterval(interval);
+            progressText.innerText = "ACCESS COMPLETE";
+            startTyping();
+        }
+    }, 60);
+}
+
+// 🧠 Fake IP generator
+function randomIP(){
+    return `${rand(10,250)}.${rand(0,255)}.${rand(0,255)}.${rand(1,254)}`;
+}
+function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+function showFakeIP(){
+    ipBox.innerHTML =
+        "IP Address: " + randomIP() + "<br>" +
+        "Location: Addis Ababa, Ethiopia<br>" +
+        "ISP: Secure Network<br>" +
+        "Status: TRACE COMPLETE";
+}
+
+// Typing effect
+let typingText = "Initializing secure connection...";
+let i = 0;
+function startTyping(){
+    function type(){
+        if(i < typingText.length){
+            typing.innerHTML += typingText.charAt(i);
+            i++;
+            setTimeout(type,40);
+        }
+    }
+    type();
+}
+
+// Matrix rain
+const canvas = document.getElementById("matrix");
+const ctx = canvas.getContext("2d");
+canvas.height = innerHeight;
+canvas.width = innerWidth;
+
+const letters = "01ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const fontSize = 16;
+const columns = canvas.width / fontSize;
+const drops = Array(Math.floor(columns)).fill(1);
+
+function drawMatrix(){
+    ctx.fillStyle = "rgba(0,0,0,0.05)";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = "#00ff00";
+    ctx.font = fontSize + "px monospace";
+
+    drops.forEach((y,i)=>{
+        const char = letters[Math.floor(Math.random()*letters.length)];
+        ctx.fillText(char, i*fontSize, y*fontSize);
+        if(y*fontSize > canvas.height && Math.random()>0.975) drops[i]=0;
+        drops[i]++;
+    });
+}
+setInterval(drawMatrix,33);
+
+addEventListener("resize",()=>{
+    canvas.width = innerWidth;
+    canvas.height = innerHeight;
+});
+</script>
+
+</body>
+</html>
